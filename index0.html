@@ -1,0 +1,215 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Brain Boost - Test Your Brain</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;
+ font-family:'Trebuchet MS',Arial,sans-serif;
+ color:#fff;
+ background:linear-gradient(135deg,#17143d,#30236b,#713c91);
+ padding:20px;
+}
+.container{max-width:850px;margin:auto}
+header{text-align:center;margin:15px 0 25px}
+header h1{font-size:clamp(30px,6vw,48px);margin:5px}
+header p{color:#d9d2ff}
+.brain{font-size:55px;animation:bounce 2s infinite}
+@keyframes bounce{50%{transform:translateY(-10px) rotate(5deg)}}
+.card{
+ background:rgba(255,255,255,.11);
+ border:1px solid rgba(255,255,255,.2);
+ border-radius:22px;padding:25px;
+ box-shadow:0 12px 35px #09051f66;
+ backdrop-filter:blur(12px);
+}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+.stat{
+ text-align:center;background:#ffffff16;padding:12px;border-radius:13px
+}
+.stat small{display:block;color:#d7d0ff;margin-bottom:5px}
+.stat strong{font-size:22px;color:#ffe36e}
+.progress{height:9px;background:#ffffff24;border-radius:20px;overflow:hidden;margin:15px 0 25px}
+#bar{height:100%;width:0;background:linear-gradient(90deg,#ffb84d,#ff5cc8);transition:.3s}
+.category{text-align:center;color:#ffd86b;font-weight:bold;font-size:14px}
+.question{text-align:center;font-size:clamp(21px,4vw,29px);font-weight:bold;margin:25px 0}
+.answers{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.answer{
+ border:2px solid #ffffff30;background:#ffffff12;color:white;
+ padding:16px;border-radius:13px;font-size:17px;cursor:pointer;
+ transition:.2s
+}
+.answer:hover{background:#ffffff2c;transform:translateY(-3px)}
+.answer.correct{background:#168b60;border-color:#6effbb}
+.answer.wrong{background:#a63254;border-color:#ff9bb3}
+.answer:disabled{cursor:default}
+.message{text-align:center;min-height:30px;margin:18px 0;font-weight:bold}
+.actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+button.main{
+ border:0;background:linear-gradient(90deg,#ffb34d,#ff5eaa);
+ color:#25123d;font-weight:bold;font-size:16px;
+ padding:13px 24px;border-radius:12px;cursor:pointer;
+}
+button.main:hover{transform:scale(1.04)}
+button:disabled{opacity:.6;cursor:default}
+#startScreen,#resultScreen{text-align:center}
+#resultScreen{display:none}
+#gameScreen{display:none}
+.instructions{line-height:1.9;color:#e1dbff}
+.timer{color:#ffcf65}
+@media(max-width:550px){
+ body{padding:12px}
+ .card{padding:18px}
+ .stats{gap:6px}
+ .stat{padding:9px 3px}
+ .stat strong{font-size:18px}
+ .answers{grid-template-columns:1fr}
+ .answer{padding:14px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+ <div class="brain">🧠</div>
+ <h1>Brain Boost</h1>
+ <p>Challenge your mind. Improve your thinking. Have fun!</p>
+</header>
+
+<div class="card">
+<section id="startScreen">
+ <h2>Are You Ready? 🚀</h2>
+ <p>Test your brain with fun puzzles and challenges!</p>
+ <div class="instructions">
+  🔢 Number puzzles<br>
+  🧩 Logical reasoning<br>
+  🔤 Word challenges<br>
+  🧠 Memory questions<br>
+  ⏱️ 20 seconds per question
+ </div>
+ <p><b>10 questions • 4 categories • 1 brain challenge</b></p>
+ <button class="main" onclick="startGame()">Start Game ▶</button>
+</section>
+
+<section id="gameScreen">
+ <div class="stats">
+  <div class="stat"><small>⭐ SCORE</small><strong id="score">0</strong></div>
+  <div class="stat"><small>❓ QUESTION</small><strong id="number">1/10</strong></div>
+  <div class="stat"><small>⏳ TIME</small><strong class="timer" id="timer">20</strong></div>
+ </div>
+ <div class="progress"><div id="bar"></div></div>
+ <div class="category" id="category"></div>
+ <div class="question" id="question"></div>
+ <div class="answers" id="answers"></div>
+ <div class="message" id="message"></div>
+ <div class="actions">
+  <button class="main" id="next" onclick="nextQuestion()" style="display:none">Next Question ➜</button>
+ </div>
+</section>
+
+<section id="resultScreen">
+ <div style="font-size:65px">🏆</div>
+ <h2>Challenge Completed!</h2>
+ <h1 id="finalScore" style="color:#ffe36e"></h1>
+ <h2 id="remark"></h2>
+ <p id="resultText"></p>
+ <button class="main" onclick="startGame()">Play Again ↻</button>
+</section>
+</div>
+</div>
+
+<script>
+const questions=[
+ {c:"NUMBER PUZZLE 🔢",q:"What comes next? 2, 4, 8, 16, ?",a:["24","32","30","20"],correct:1,why:"Each number is multiplied by 2."},
+ {c:"LOGICAL THINKING 🧩",q:"If 5 cats catch 5 mice in 5 minutes, how many cats catch 100 mice in 100 minutes?",a:["5","20","100","10"],correct:0,why:"Each cat catches one mouse in 5 minutes. Five cats catch 100 mice in 100 minutes."},
+ {c:"WORD CHALLENGE 🔤",q:"Which word is spelled correctly?",a:["Neccessary","Necessary","Necesary","Neccesary"],correct:1,why:"Necessary is the correct spelling."},
+ {c:"BRAIN TEASER 🧠",q:"What has hands but cannot clap?",a:["Robot","Clock","Baby","Monkey"],correct:1,why:"A clock has hands but cannot clap."},
+ {c:"NUMBER PUZZLE 🔢",q:"What is 15% of 200?",a:["20","25","30","35"],correct:2,why:"15% of 200 = 30."},
+ {c:"LOGICAL THINKING 🧩",q:"A farmer has 17 sheep. All but 9 run away. How many remain?",a:["8","9","17","0"],correct:1,why:"All but 9 means 9 sheep remain."},
+ {c:"MEMORY & REASONING 🧠",q:"Which one is different?",a:["Apple","Mango","Carrot","Banana"],correct:2,why:"Carrot is a vegetable; the others are fruits."},
+ {c:"NUMBER PUZZLE 🔢",q:"If 3 pencils cost ₹15, what do 7 pencils cost?",a:["₹25","₹30","₹35","₹40"],correct:2,why:"One pencil costs ₹5, so 7 cost ₹35."},
+ {c:"WORD CHALLENGE 🔤",q:"Unscramble: L P P A E",a:["PAPER","APPLE","PLATE","PLACE"],correct:1,why:"The letters form APPLE."},
+ {c:"LOGICAL THINKING 🧩",q:"Which month has 28 days?",a:["February only","January","All months","June"],correct:2,why:"Every month has at least 28 days."}
+];
+
+let current=0,score=0,time=20,interval=null,answered=false,quiz=[];
+function startGame(){
+ clearInterval(interval);
+ quiz=[...questions].sort(()=>Math.random()-.5);
+ current=0;score=0;
+ $("startScreen").style.display="none";
+ $("resultScreen").style.display="none";
+ $("gameScreen").style.display="block";
+ $("score").textContent=0;
+ showQuestion();
+}
+function $(id){return document.getElementById(id)}
+function showQuestion(){
+ clearInterval(interval);
+ answered=false;time=20;
+ let q=quiz[current];
+ $("number").textContent=(current+1)+"/10";
+ $("score").textContent=score;
+ $("timer").textContent=time;
+ $("bar").style.width=(current/10*100)+"%";
+ $("category").textContent=q.c;
+ $("question").textContent=q.q;
+ $("message").textContent="";
+ $("next").style.display="none";
+ $("answers").innerHTML="";
+ q.a.forEach((answer,i)=>{
+  let btn=document.createElement("button");
+  btn.className="answer";btn.textContent=answer;
+  btn.onclick=()=>choose(i);
+  $("answers").appendChild(btn);
+ });
+ interval=setInterval(()=>{
+  time--;
+  $("timer").textContent=time;
+  if(time<=5)$("timer").style.color="#ff6868";
+  if(time<=0){
+   clearInterval(interval);
+   if(!answered)choose(-1);
+  }
+ },1000);
+}
+function choose(index){
+ if(answered)return;
+ answered=true;clearInterval(interval);
+ let q=quiz[current],buttons=document.querySelectorAll(".answer");
+ buttons.forEach((b,i)=>{
+  b.disabled=true;
+  if(i===q.correct)b.classList.add("correct");
+  else if(i===index)b.classList.add("wrong");
+ });
+ if(index===q.correct){
+  score+=10;
+  $("message").textContent="🎉 Correct! +10 points";
+  $("message").style.color="#6effbb";
+ }else{
+  $("message").textContent=(index===-1?"⏰ Time's up! ":"❌ Not quite! ")+q.why;
+  $("message").style.color="#ffb3c4";
+ }
+ $("score").textContent=score;
+ $("next").style.display="inline-block";
+ $("next").textContent=current===9?"See Results 🏆":"Next Question ➜";
+}
+function nextQuestion(){
+ if(current<9){current++;showQuestion()}
+ else showResults();
+}
+function showResults(){
+ clearInterval(interval);
+ $("gameScreen").style.display="none";
+ $("resultScreen").style.display="block";
+ $("finalScore").textContent=score+" / 100";
+ $("remark").textContent=score>=80?"🌟 Excellent Brain!":score>=50?"👏 Great Effort!":"💪 Keep Practising!";
+ $("resultText").textContent="You answered the challenge. Your score: "+score+" points.";
+}
+</script>
+</body>
+</html>
